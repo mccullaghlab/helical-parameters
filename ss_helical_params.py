@@ -10,8 +10,13 @@ import MDAnalysis
 from MDAnalysis.analysis.align import *
 
 radians_to_degrees = 180.0/3.1415926535
-base_atom_select = "name N9 or name N7 or name C8 or name C5 or name C4 or name N3 or name C2 or name N1 or name C6 or name O6 or name N2 or name N6 or name O2 or name N4 or name O4 or name C5M or name N2"
-nucleic_res_select = "resname DA or resname DA3 or resname DA5 or resname ADE or resname DT or resname DT3 or resname DT5 or resname THY or resname DG or resname DG3 or resname DG5 or resname GUA or resname DC or resname DC3 or resname DC5 or resname CYT or resname DU or resname DU3 or resname DU5 or resname URA or resname AP3"
+base_atom_select = "name N1 or name C8 or name O1 or name C9 or name O2 or name C10 or name C11 or name C12 or name C13 or name C14 or name C15 or name C16 or name C17 or name C18 or name C19 or name C20 or name C21 or name C22 or name C23 or name C24 or name C25 or name C26 or name C27 or name O3 or name C28 or name C29 or name C30 or name O4 or name N2 or name C31"
+#nucleic_res_select = "resname DA or resname DA3 or resname DA5 or resname ADE or resname DT or resname DT3 or resname DT5 or resname THY or resname DG or resname DG3 or resname DG5 or resname GUA or resname DC or resname DC3 or resname DC5 or resname CYT or resname DU or resname DU3 or resname DU5 or resname URA or resname AP3"
+nucleic_res_select = "resname PDI"
+atom1 = "N1"   # first atom making 
+atom2 = "N2"   # second atom making priary axis
+atom3 = "C16"   # other in plane atom
+
 
 # Subroutines
 def get_rot_mat(vec1,vec2):
@@ -65,16 +70,20 @@ def computeBaseAxes(nucl):
 
 	for i in range(0,n_residues):
 		# select the residue of interest
-		selection = "resid " + str(nucl.resids()[i])
-		res_univ = nucl.selectAtoms(selection)
+		sel1 = "resid " + str(nucl.resids()[i]) + " and name "+atom1
+		sel2 = "resid " + str(nucl.resids()[i]) + " and name "+atom2
+		sel3 = "resid " + str(nucl.resids()[i]) + " and name "+atom3
+		sel1_univ = nucl.selectAtoms(sel1)
+		sel2_univ = nucl.selectAtoms(sel2)
+		sel3_univ = nucl.selectAtoms(sel3)
 		# get the three atom positions
-		n1_pos = res_univ.N1.pos
-		n9_pos = res_univ.N9.pos
-		n7_pos = res_univ.N7.pos
+		atom1_pos = sel1_univ.positions[0]
+		atom2_pos = sel2_univ.positions[0]
+		atom3_pos = sel3_univ.positions[0]
 		# determine the three axes using the three atom positions
-		r1 = n1_pos-n9_pos
+		r1 = atom2_pos-atom1_pos
 		r1 /= math.sqrt(numpy.dot(r1,r1))
-		t1 = n7_pos-n9_pos
+		t1 = atom3_pos-atom1_pos
 		t1 /= math.sqrt(numpy.dot(t1,t1))
 		r3 = numpy.cross(r1,t1)
 		r3 /= math.sqrt(numpy.dot(r3,r3))
@@ -116,10 +125,10 @@ def computeBaseAngles(nucl,base_axes,ang_file_pointer):
 		for j in range (i+1,n_residues):
 			# Roll is the rotation about the major axis (r1) 
 			# determine this by first projecting r2' into the r2xr3 plane
-			r2p = numpy.dot(base_axes[j][1],base_axes[i][1])*base_axes[i][1] + numpy.dot(base_axes[j][1],base_axes[i][2])*base_axes[i][2]
-			r2p /= math.sqrt(numpy.dot(r2p,r2p))
-			cos_roll = numpy.dot(r2p,base_axes[i][1])
-			sin_roll = numpy.dot(r2p,base_axes[i][2])
+			r3p = numpy.dot(base_axes[j][2],base_axes[i][1])*base_axes[i][1] + numpy.dot(base_axes[j][2],base_axes[i][2])*base_axes[i][2]
+			r3p /= math.sqrt(numpy.dot(r3p,r3p))
+			cos_roll = numpy.dot(r3p,base_axes[i][2])
+			sin_roll = numpy.dot(r3p,base_axes[i][1])
 			roll = math.atan2(sin_roll,cos_roll)*radians_to_degrees
 			# Tilt is the rotation about the in-plane minor axis (r2)
 			# we project r3' into the r1xr3 plane
@@ -130,10 +139,10 @@ def computeBaseAngles(nucl,base_axes,ang_file_pointer):
 			tilt = math.atan2(sin_tilt,cos_tilt)*radians_to_degrees
 			# Twist is the rotation about the out-of-plane axis (r3)
 			# we project r1' into the r1xr2 plane
-			r1p = numpy.dot(base_axes[j][0],base_axes[i][0])*base_axes[i][0]+numpy.dot(base_axes[j][0],base_axes[i][1])*base_axes[i][1]
-			r1p /= math.sqrt(numpy.dot(r1p,r1p))
-			cos_twist = numpy.dot(r1p,base_axes[i][0])
-			sin_twist = numpy.dot(r1p,base_axes[i][1])
+			r2p = numpy.dot(base_axes[j][1],base_axes[i][0])*base_axes[i][0]+numpy.dot(base_axes[j][1],base_axes[i][1])*base_axes[i][1]
+			r2p /= math.sqrt(numpy.dot(r2p,r2p))
+			cos_twist = numpy.dot(r2p,base_axes[i][1])
+			sin_twist = numpy.dot(r2p,base_axes[i][0])
 			twist = math.atan2(sin_twist,cos_twist)*radians_to_degrees
 			# print values to file for this pair of bases
 			ang_file_pointer.write("%3d-%3d %8.3f %8.3f %8.3f\n" % (i+1,j+1,roll,tilt,twist))
