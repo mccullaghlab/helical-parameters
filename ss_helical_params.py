@@ -10,12 +10,19 @@ import MDAnalysis
 from MDAnalysis.analysis.align import *
 
 radians_to_degrees = 180.0/3.1415926535
-base_atom_select = "name N1 or name C8 or name O1 or name C9 or name O2 or name C10 or name C11 or name C12 or name C13 or name C14 or name C15 or name C16 or name C17 or name C18 or name C19 or name C20 or name C21 or name C22 or name C23 or name C24 or name C25 or name C26 or name C27 or name O3 or name C28 or name C29 or name C30 or name O4 or name N2 or name C31"
-#nucleic_res_select = "resname DA or resname DA3 or resname DA5 or resname ADE or resname DT or resname DT3 or resname DT5 or resname THY or resname DG or resname DG3 or resname DG5 or resname GUA or resname DC or resname DC3 or resname DC5 or resname CYT or resname DU or resname DU3 or resname DU5 or resname URA or resname AP3"
-nucleic_res_select = "resname PDI"
-atom1 = "N1"   # first atom making 
-atom2 = "N2"   # second atom making priary axis
-atom3 = "C16"   # other in plane atom
+base_atom_select = "name N9 or name N7 or name C8 or name C5 or name C4 or name N3 or name C2 or name N1 or name C6 or name O6 or name N2 or name N6 or name O2 or name N4 or name O4 or name C5M or name N2"
+# For PDI
+#base_atom_select = "name N1 or name C8 or name O1 or name C9 or name O2 or name C10 or name C11 or name C12 or name C13 or name C14 or name C15 or name C16 or name C17 or name C18 or name C19 or name C20 or name C21 or name C22 or name C23 or name C24 or name C25 or name C26 or name C27 or name O3 or name C28 or name C29 or name C30 or name O4 or name N2 or name C31"
+nucleic_res_select = "resname DA or resname DA3 or resname DA5 or resname ADE or resname DT or resname DT3 or resname DT5 or resname THY or resname DG or resname DG3 or resname DG5 or resname GUA or resname DC or resname DC3 or resname DC5 or resname CYT or resname DU or resname DU3 or resname DU5 or resname URA or resname AP3"
+# For PDI only:
+#nucleic_res_select = "resname PDI"
+#atom1 = "N1"
+#atom2 = "N2"
+#atom3 = "C16"
+# For purines:
+atom1 = "N9"   # first atom making 
+atom2 = "N1"   # second atom making priary axis
+atom3 = "N7"   # other in plane atom
 
 
 # Subroutines
@@ -185,18 +192,4 @@ for ts in coord.trajectory:
 
 dist_file_pointer.close
 ang_file_pointer.close
-
-# subtract the average from the selected coordinates
-#disp_vec = ref_sel.centerOfMass() 
-#ref_sel.translate(-disp_vec)
-#coord.atoms.translate(-inp_sel.centerOfMass())
-
-#compute rotation matrix
-#R, rmsd = MDAnalysis.analysis.align.rotation_matrix(inp_sel.positions,ref_sel.positions)
-#print R, disp_vec
-
-#Apply rotation and translation and then print new pdb
-#coord.atoms.rotate(R)
-#coord.atoms.translate(disp_vec)
-#coord.atoms.write(out_pdb_file)
 
