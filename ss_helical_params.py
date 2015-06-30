@@ -11,21 +11,33 @@ from MDAnalysis.analysis.align import *
 
 # constant to convert radians to degrees
 radians_to_degrees = 180.0/3.1415926535
+# number of types of bases (e.g. purines and pyrimidines)
+n_base_types = 3
 
-# Atom selections for nucleobases.  For PDI only you must comment out the next few lines and uncomment the subsequent lines.
-base_atom_select = "name N9 or name N7 or name C8 or name C5 or name C4 or name N3 or name C2 or name N1 or name C6 or name O6 or name N2 or name N6 or name O2 or name N4 or name O4 or name C5M or name N2"
-nucleic_res_select = "resname DA or resname DA3 or resname DA5 or resname ADE or resname DT or resname DT3 or resname DT5 or resname THY or resname DG or resname DG3 or resname DG5 or resname GUA or resname DC or resname DC3 or resname DC5 or resname CYT or resname DU or resname DU3 or resname DU5 or resname URA or resname AP3"
-# For purines:
-atom1 = "N9"   # first atom making 
-atom2 = "N1"   # second atom making priary axis
-atom3 = "N7"   # other in plane atom
-
-# For PDI only:
-#base_atom_select = "name N1 or name C8 or name O1 or name C9 or name O2 or name C10 or name C11 or name C12 or name C13 or name C14 or name C15 or name C16 or name C17 or name C18 or name C19 or name C20 or name C21 or name C22 or name C23 or name C24 or name C25 or name C26 or name C27 or name O3 or name C28 or name C29 or name C30 or name O4 or name N2 or name C31"
-#nucleic_res_select = "resname PDI"
-#atom1 = "N1"
-#atom2 = "N2"
-#atom3 = "C16"
+# defining which residues are each base type
+res_select = []
+res_select.append("resname DA or resname DA3 or resname DA5 or resname ADE or resname DG or resname DG3 or resname DG5 or resname GUA or resname AP3")
+res_select.append("resname DT or resname DT3 or resname DT5 or resname THY or resname DC or resname DC3 or resname DC5 or resname CYT or resname DU or resname DU3 or resname DU5 or resname URA")
+res_select.append("resname PDI")
+# Atom selections for bases
+base_atom_select = []
+base_atom_select.append("name N9 or name N7 or name C8 or name C5 or name C4 or name N3 or name C2 or name N1 or name C6 or name O6 or name N2 or name N6 or name O2 or name N4 or name O4 or name C5M or name N2")
+base_atom_select.append("name N9 or name N7 or name C8 or name C5 or name C4 or name N3 or name C2 or name N1 or name C6 or name O6 or name N2 or name N6 or name O2 or name N4 or name O4 or name C5M or name N2")
+base_atom_select.append("name N1 or name C8 or name O1 or name C9 or name O2 or name C10 or name C11 or name C12 or name C13 or name C14 or name C15 or name C16 or name C17 or name C18 or name C19 or name C20 or name C21 or name C22 or name C23 or name C24 or name C25 or name C26 or name C27 or name O3 or name C28 or name C29 or name C30 or name O4 or name N2 or name C31")
+# Three atoms used to define axes of bases
+atom = []
+atom.append([])
+atom[0].append("N9")   # first atom making primary axis
+atom[0].append("N1")   # second atom making primary axis
+atom[0].append("N7")   # third atom in plane. Used to determine out of plane axis
+atom.append([])
+atom[1].append("C6")   # pyrimidine
+atom[1].append("N3")   # pyrimidine
+atom[1].append("C2")   # pyrimidine
+atom.append([])
+atom[2].append("N1")   # PDI
+atom[2].append("N2")   # PDI
+atom[2].append("C16")  # PDI
 
 
 # Subroutines
@@ -67,12 +79,25 @@ def computePbcDist(r1,r2,box):
 
 # subroutine to compute the three axes for each base
 def computeBaseAxes(nucl):
-
+	global res_select, atom, base_atom_select, n_base_types, res_atom_select
 	n_residues = len(nucl.resids())
 
 	axes = numpy.zeros((n_residues,3,3),dtype=float)
 
 	for i in range(0,n_residues):
+
+		# determine what type of base we are looking at
+		sel1 = "resid " + str(nucl.resids()[i])
+		sel1_univ = nucl.selectAtoms(sel1)
+		for j in range(0,n_base_types):
+			sel2_univ = sel1_univ.selectAtoms(res_select[j])
+			if len(sel2_univ.atoms) > 0:
+				atom1 = atom[j][0]
+				atom2 = atom[j][1]
+				atom3 = atom[j][2]
+				res_atom_select.append(base_atom_select[j])
+				break
+
 		# select the residue of interest
 		sel1 = "resid " + str(nucl.resids()[i]) + " and name "+atom1
 		sel2 = "resid " + str(nucl.resids()[i]) + " and name "+atom2
@@ -102,7 +127,7 @@ def computeBaseAxes(nucl):
 
 # subroutine to compute three distances along axis of first base for each pair of bases
 def computeBaseDistances(nucl,base_axes,dist_file_pointer):
-	global base_atom_select
+	global res_atom_select
 	n_residues = len(nucl.resids())
 	coms = numpy.zeros((n_residues,3),dtype=float)
 
@@ -110,7 +135,7 @@ def computeBaseDistances(nucl,base_axes,dist_file_pointer):
 		# select the residue of interest
 		selection = "resid " + str(nucl.resids()[i])
 		res_univ = nucl.selectAtoms(selection)
-		base_univ = res_univ.selectAtoms(base_atom_select)
+		base_univ = res_univ.selectAtoms(res_atom_select[i])
 		# get the center of mass of the base
 		coms[i] = base_univ.centerOfMass()
 
@@ -168,6 +193,11 @@ print "Trajectory file:", traj_file
 # initiate coordinate universe
 coord = MDAnalysis.Universe(top_file, traj_file)
 
+# determine total selection
+nucleic_res_select = res_select[0]
+for i in range(1,n_base_types):
+	nucleic_res_select += " or "+ res_select[i]
+
 # Select only nucleic atoms
 nucl = coord.selectAtoms(nucleic_res_select)
 print nucl
@@ -177,6 +207,7 @@ dist_file_pointer = open("dist.dat",'w')
 ang_file_pointer = open("ang.dat",'w')
 
 # Loop through trajectory
+res_atom_select=[]
 for ts in coord.trajectory:
 
 	# compute axes of base
