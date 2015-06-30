@@ -29,12 +29,6 @@ atom3 = "N7"   # other in plane atom
 
 
 # Subroutines
-def get_rot_mat(vec1,vec2):
-	v = numpy.cross(vec1,vec2)
-	cosTheta = numpy.dot(vec1,vec2)
-	vx = numpy.matrix([[0,-v[2],v[1]],[v[2],0,-v[0]],[-v[1],v[0],0]],dtype=float)
-	rot = numpy.diag([1.0,1.0,1.0]) + vx + numpy.dot(vx,vx)*(1-cosTheta)/math.pow(linalg.norm(v),2)
-	return rot
 
 # read the configuration file and populate the global variables
 def ParseConfigFile(cfg_file):
@@ -71,8 +65,8 @@ def computePbcDist(r1,r2,box):
 	dist = math.sqrt(dist)
 	return dist;
 
+# subroutine to compute the three axes for each base
 def computeBaseAxes(nucl):
-
 
 	n_residues = len(nucl.resids())
 
@@ -106,6 +100,7 @@ def computeBaseAxes(nucl):
 
 	return axes;
 
+# subroutine to compute three distances along axis of first base for each pair of bases
 def computeBaseDistances(nucl,base_axes,dist_file_pointer):
 	global base_atom_select
 	n_residues = len(nucl.resids())
@@ -127,6 +122,7 @@ def computeBaseDistances(nucl,base_axes,dist_file_pointer):
 			rise = numpy.dot(dist,base_axes[i][2])
 			dist_file_pointer.write("%3d-%3d %8.3f %8.3f %8.3f\n" % (i+1,j+1,slide,shift,rise))
 
+# subroutine to compute the three angles needed to rotate base one to base two around the axes of base one for each pair of bases. 
 def computeBaseAngles(nucl,base_axes,ang_file_pointer):
 	global radians_to_degrees
 	n_residues = len(nucl.resids())
@@ -174,7 +170,6 @@ coord = MDAnalysis.Universe(top_file, traj_file)
 
 # Select only nucleic atoms
 nucl = coord.selectAtoms(nucleic_res_select)
-
 print nucl
 
 # open output files
@@ -187,10 +182,10 @@ for ts in coord.trajectory:
 	# compute axes of base
 	base_axes = computeBaseAxes(nucl)
 
-	# compute distance parameters for each pair of bases
+	# compute and print distance parameters for each pair of bases
 	computeBaseDistances(nucl,base_axes,dist_file_pointer)
 
-	# compute angle parameters for each pair of bases
+	# compute and print angle parameters for each pair of bases
 	computeBaseAngles(nucl,base_axes,ang_file_pointer)
 
 dist_file_pointer.close
