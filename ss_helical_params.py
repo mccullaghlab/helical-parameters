@@ -173,7 +173,7 @@ def computeBaseAngles(nucl,base_axes,ang_file_pointer):
 			r2p = numpy.dot(base_axes[j][1],base_axes[i][0])*base_axes[i][0]+numpy.dot(base_axes[j][1],base_axes[i][1])*base_axes[i][1]
 			r2p /= math.sqrt(numpy.dot(r2p,r2p))
 			cos_twist = numpy.dot(r2p,base_axes[i][1])
-			sin_twist = numpy.dot(r2p,base_axes[i][0])
+			sin_twist = -numpy.dot(r2p,base_axes[i][0])
 			twist = math.atan2(sin_twist,cos_twist)*radians_to_degrees
 			# print values to file for this pair of bases
 			ang_file_pointer.write("%3d-%3d %8.3f %8.3f %8.3f\n" % (i+1,j+1,roll,tilt,twist))
